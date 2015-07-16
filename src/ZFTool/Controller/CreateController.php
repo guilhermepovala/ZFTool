@@ -188,9 +188,21 @@ class CreateController extends AbstractActionController
         $classReflection = $fileReflection->getClass($class);
 
         $classGenerator = Generator\ClassGenerator::fromReflection($classReflection);
-        $classGenerator->addUse('Zend\Mvc\Controller\AbstractActionController')
-                       ->addUse('Zend\View\Model\ViewModel')
-                       ->setExtendedClass('AbstractActionController');
+        
+        if (!count($fileReflection->getUses())) {
+            $classGenerator->addUse('Zend\Mvc\Controller\AbstractActionController')
+                    ->addUse('Zend\View\Model\ViewModel');
+        } else {
+            foreach ($fileReflection->getUses() as $use) {
+                if ($use['as']) {
+                    $classGenerator->addUse($use['use'], $use['as']);
+                } else {
+                    $classGenerator->addUse($use['use']);
+                }
+            }
+        }
+
+        $classGenerator->setExtendedClass('AbstractActionController');
 
         if ($classGenerator->hasMethod($action . 'Action')) {
             return $this->sendError(
